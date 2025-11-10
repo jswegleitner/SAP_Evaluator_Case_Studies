@@ -21,7 +21,8 @@ import folium
 from folium import IFrame
 
 # Configuration
-INSPECTION_PDF_URL = "inspection_form.pdf"  # relative to the served site (docs/ when using Pages)
+# Use the ATC-20 PDF present in the docs/ folder so the modal opens the fillable ATC form
+INSPECTION_PDF_URL = "ATC-20-Rapid-Evaluation Fillable.pdf"  # relative to the map location (we save the map into docs/)
 
 # Create base map
 m = folium.Map(location=[37.7749, -122.4194], zoom_start=14)
@@ -259,5 +260,5 @@ function openInspectionForm(siteId){
 modal_and_form = modal_and_form.replace('{INSPECTION_PDF_URL}', INSPECTION_PDF_URL)
 m.get_root().html.add_child(folium.Element('{% raw %}' + modal_and_form + '{% endraw %}'))
 
-# Save final HTML
-m.save("sap_case_study_map.html")
+# Save final HTML into docs/ so GitHub Pages serves it
+m.save("docs/sap_case_study_map.html")
