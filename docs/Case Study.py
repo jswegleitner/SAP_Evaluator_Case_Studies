@@ -103,13 +103,14 @@ for idx, site in enumerate(damage_sites):
                 img = site.get("image_url")
                 popup_html = f"<h4>{site['name']}</h4><img src=\"{img}\" style=\"max-width:420px;\"><br>"
 
-        # Add marker color buttons and Open Form button
+        # Add marker color buttons and Download Form button (downloads ATC-20 PDF)
         popup_html += (
                 '<div class="mt-2">'
                 '<button class="btn btn-sm btn-outline-dark mark-btn" data-color="red">Mark Red</button> '
                 '<button class="btn btn-sm btn-outline-dark mark-btn" data-color="yellow">Mark Yellow</button> '
                 '<button class="btn btn-sm btn-outline-dark mark-btn" data-color="green">Mark Green</button> '
-                f'<button class="btn btn-sm btn-primary" onclick="openInspectionForm({idx})">Open Form</button>'
+                # Ensure the anchor text is visible without hover by forcing white text color
+                f'<a class="btn btn-sm btn-primary" href="{INSPECTION_PDF_URL}" download style="color:#fff !important; text-decoration:none;">Download Form</a>'
                 '</div>'
         )
 
@@ -199,39 +200,18 @@ modal_and_form = '''
                 <h5 class="modal-title">Inspection Form - <span id="inspectionTitle"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" style="height:75vh;">
+            <div class="modal-body" style="height:80vh;">
                 <div class="row h-100">
-                    <div class="col-md-7 h-100">
-                        <iframe id="inspectionPdfFrame" src="{INSPECTION_PDF_URL}" style="width:100%; height:100%; border:1px solid #ddd;"></iframe>
-                    </div>
-                    <div class="col-md-5 h-100" style="overflow:auto;">
-                        <form id="inspectionForm" style="padding-bottom:1rem;">
-                            <div class="mb-2">
-                                <label class="form-label">Inspector</label>
-                                <input class="form-control" id="inspectorName" />
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Date</label>
-                                <input type="date" class="form-control" id="inspectionDate" />
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Severity</label>
-                                <select id="inspectionSeverity" class="form-select">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Notes</label>
-                                <textarea id="inspectionNotes" class="form-control" rows="6"></textarea>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="btn btn-primary" id="saveInspectionBtn">Save</button>
-                                <button type="button" class="btn btn-secondary" id="downloadInspectionBtn">Download JSON</button>
-                                <button type="button" class="btn btn-outline-secondary" id="clearInspectionBtn">Clear</button>
-                            </div>
-                        </form>
+                    <div class="col-md-12 h-100 d-flex flex-column">
+                        <!-- PDF viewer -->
+                        <div style="flex:1 1 auto; min-height:0;">
+                            <iframe id="inspectionPdfFrame" src="{INSPECTION_PDF_URL}" style="width:100%; height:100%; border:1px solid #ddd;"></iframe>
+                        </div>
+                        <!-- Controls -->
+                        <div class="mt-2 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" id="openPdfNewTabBtn">Open PDF in new tab</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -241,17 +221,14 @@ modal_and_form = '''
 
 <script>
 function openInspectionForm(siteId){
-    document.getElementById('inspectionTitle').textContent = 'Site ' + siteId;
-    var key = 'inspection_' + siteId; var data = localStorage.getItem(key); if(data){ try{ data = JSON.parse(data);}catch(e){data=null;} }
-    document.getElementById('inspectorName').value = data && data.inspector ? data.inspector : '';
-    document.getElementById('inspectionDate').value = data && data.date ? data.date : '';
-    document.getElementById('inspectionSeverity').value = data && data.severity ? data.severity : 'low';
-    document.getElementById('inspectionNotes').value = data && data.notes ? data.notes : '';
-    document.getElementById('inspectionPdfFrame').src = '{INSPECTION_PDF_URL}' + '?_t=' + Date.now();
-    document.getElementById('saveInspectionBtn').onclick = function(){ var payload = {inspector:document.getElementById('inspectorName').value, date:document.getElementById('inspectionDate').value, severity:document.getElementById('inspectionSeverity').value, notes:document.getElementById('inspectionNotes').value}; localStorage.setItem(key, JSON.stringify(payload)); this.textContent='Saved'; var btn=this; setTimeout(function(){btn.textContent='Save';},1200); };
-    document.getElementById('downloadInspectionBtn').onclick = function(){ var saved = localStorage.getItem(key)||'{}'; var blob=new Blob([saved],{type:'application/json'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='inspection_site_'+siteId+'.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); };
-    document.getElementById('clearInspectionBtn').onclick = function(){ if(confirm('Clear saved inspection for site '+siteId+'?')){ localStorage.removeItem(key); document.getElementById('inspectorName').value=''; document.getElementById('inspectionDate').value=''; document.getElementById('inspectionSeverity').value='low'; document.getElementById('inspectionNotes').value=''; } };
-    var modal = new bootstrap.Modal(document.getElementById('inspectionModal')); modal.show();
+    document.getElementById('inspectionTitle').textContent = 'Inspection Form - Site ' + siteId;
+    var pdfUrl = '{INSPECTION_PDF_URL}';
+    try{ document.getElementById('inspectionPdfFrame').src = pdfUrl + '?_t=' + Date.now(); }catch(e){}
+    // wire the open-in-new-tab button to the correct URL (encode spaces)
+    var btn = document.getElementById('openPdfNewTabBtn');
+    if(btn){ btn.onclick = function(){ window.open(encodeURI(pdfUrl), '_blank'); }; }
+    var modal = new bootstrap.Modal(document.getElementById('inspectionModal'));
+    modal.show();
 }
 </script>
 '''
