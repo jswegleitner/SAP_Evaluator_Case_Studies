@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_1cbba7be74ecd98a85a440eec047acc9 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+<script>
+(function(){
+    // Find the folium-generated map object (it has a name like map_<hex>)
+    function findMap(){
+        for(var k in window){
+            if(k.indexOf('map_') === 0 && window[k] && typeof window[k].on === 'function'){
+                return window[k];
+            }
+        }
+        return null;
+    }
+
+    function init(){
+        var map = findMap();
+        if(!map){
+            // map not yet present; try again shortly
+            setTimeout(init, 100);
+            return;
+        }
+
+        function changeMarkerColor(marker, color){
+            try{
+                var cssColor = color === 'yellow' ? '#f0ad4e' : (color === 'red' ? '#d9534f' : (color === 'green' ? '#5cb85c' : color));
+                var html = '<i class="fa fa-map-marker" style="color: ' + cssColor + '; font-size: 28px; text-shadow: 0 0 2px rgba(0,0,0,0.6);"></i>';
+                var icon = L.divIcon({className: 'custom-div-icon', html: html, iconSize: [28, 28], iconAnchor: [14, 28]});
+
+                // Try to set the marker's icon directly first
+                try{
+                    marker.setIcon(icon);
+                } catch(e){
+                    // If setIcon fails for some marker types, fall back to creating an overlay marker
+                }
+
+                // Additionally, create or update a top-layer colored marker so the color is visible reliably
+                try{
+                    if(marker.__coloredMarker && marker.__coloredMarker.remove){
+                        // update existing overlay marker's icon
+                        marker.__coloredMarker.setIcon(icon);
+                    } else {
+                        var colored = L.marker(marker.getLatLng(), {icon: icon, interactive: false});
+                        colored.addTo(map);
+                        // keep reference so subsequent color changes update the same overlay marker
+                        marker.__coloredMarker = colored;
+                    }
+                    // hide original marker visually if possible
+                    if (marker.setOpacity) marker.setOpacity(0);
+                } catch(e){
+                    // ignore overlay failures
+                }
+
+                if (marker.setZIndexOffset) marker.setZIndexOffset(1000);
+            } catch(e){
+                console.warn('changeMarkerColor failed', e);
+            }
+        }
+
+        // Expose a helper so inline onclick handlers in the popup can find the marker and change its icon
+        window.changeMarkerColorByPopup = function(btn, color){
+            try{
+                var popupEl = btn.closest('.leaflet-popup');
+                if(!popupEl) return;
+                var targetMarker = null;
+                for(var lid in map._layers){
+                    var layer = map._layers[lid];
+                    if(layer && layer._popup && layer._popup._container === popupEl){
+                        targetMarker = layer;
+                        break;
+                    }
+                }
+                if(targetMarker){
+                    changeMarkerColor(targetMarker, color);
+                }
+            }catch(err){ console.warn('changeMarkerColorByPopup failed', err); }
+        };
+
+        map.on('popupopen', function(e){
+            var marker = e.popup._source;
+            var popupEl = e.popup.getElement();
+            if(!popupEl) return;
+            var btns = popupEl.querySelectorAll('.mark-btn');
+            btns.forEach(function(b){
+                if (b._hasHandler) return;
+                b._hasHandler = true;
+                b.addEventListener('click', function(){
+                    var color = this.getAttribute('data-color');
+                    changeMarkerColor(marker, color);
+                });
+            });
+        });
+    }
+
+    if (document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>
+    
+<style>
+.carousel-control-prev-icon, .carousel-control-next-icon {
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23000' d='M11.354 1.646a.5.5 0 0 1 .707.708L6.707 8l5.354 5.646a.5.5 0 0 1-.707.708l-6-6a.5.5 0 0 1 0-.708l6-6z'/%3E%3C/svg%3E");
+    width: 1.6rem; height: 1.6rem; background-size: 100% 100%;
+}
+.carousel-control-next-icon { transform: rotate(180deg); }
+</style>
+    
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.awesome-markers/2.0.4/leaflet.awesome-markers.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.awesome-markers/2.0.4/leaflet.awesome-markers.js"></script>
+    
+            <div class="folium-map" id="map_1cbba7be74ecd98a85a440eec047acc9" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_1cbba7be74ecd98a85a440eec047acc9 = L.map(
+                "map_1cbba7be74ecd98a85a440eec047acc9",
+                {
+                    center: [37.7749, -122.4194],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 14,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_ac4ef66f52514603285be90d1af083e4 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_ac4ef66f52514603285be90d1af083e4.addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+        
+    
+            var tile_layer_d0ba62c64323e111f89ea92aeaec57b7 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_d0ba62c64323e111f89ea92aeaec57b7.addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+        
+    
+            var tile_layer_ef4c78c46c7eba0db46700f436d4bc88 = L.tileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "Esri",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_ef4c78c46c7eba0db46700f436d4bc88.addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+        
+    
+            var layer_control_3e51a311cb3b3de72134f6ca42add124_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_d0ba62c64323e111f89ea92aeaec57b7,
+                    "Esri Satellite" : tile_layer_ef4c78c46c7eba0db46700f436d4bc88,
+                },
+                overlays :  {
+                },
+            };
+            let layer_control_3e51a311cb3b3de72134f6ca42add124 = L.control.layers(
+                layer_control_3e51a311cb3b3de72134f6ca42add124_layers.base_layers,
+                layer_control_3e51a311cb3b3de72134f6ca42add124_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+
+        
+    
+            var marker_9208db956fc442b142543ce0e706b680 = L.marker(
+                [37.779517849076974, -122.41923136450328],
+                {
+}
+            ).addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+        
+    
+        var popup_ab05c7d1e37a4629c4bdc886d7fa6cc2 = L.popup({
+  "maxWidth": 600,
+});
+
+        
+            
+                var html_1b7adb75079065c32741825df2ba0216 = $(`<div id="html_1b7adb75079065c32741825df2ba0216" style="width: 100.0%; height: 100.0%;"><h4>Building A</h4><img src="https://jswegleitner.github.io/SAP_Evaluator_Case_Studies/images/IMG_0944.JPG" style="max-width:300px;"><br><div class="mt-2"><button class="btn btn-sm btn-outline-dark mark-btn" data-color="red" onclick="changeMarkerColorByPopup(this,'red'); return false;">Mark Red</button> <button class="btn btn-sm btn-outline-dark mark-btn" data-color="yellow" onclick="changeMarkerColorByPopup(this,'yellow'); return false;">Mark Yellow</button> <button class="btn btn-sm btn-outline-dark mark-btn" data-color="green" onclick="changeMarkerColorByPopup(this,'green'); return false;">Mark Green</button></div></div>`)[0];
+                popup_ab05c7d1e37a4629c4bdc886d7fa6cc2.setContent(html_1b7adb75079065c32741825df2ba0216);
+            
+        
+
+        marker_9208db956fc442b142543ce0e706b680.bindPopup(popup_ab05c7d1e37a4629c4bdc886d7fa6cc2)
+        ;
+
+        
+    
+    
+            var marker_f88b97b92ffe8024fd7e9f733d4f02b3 = L.marker(
+                [37.788485414331554, -122.39123507820277],
+                {
+}
+            ).addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+        
+    
+        var popup_60278195853ed0d4ce20370a04703ec4 = L.popup({
+  "maxWidth": 600,
+});
+
+        
+            
+                var html_15d1956e543888720b71b7b6d8ba0f96 = $(`<div id="html_15d1956e543888720b71b7b6d8ba0f96" style="width: 100.0%; height: 100.0%;"><h4>Building B</h4><img src="https://jswegleitner.github.io/SAP_Evaluator_Case_Studies/images/IMG_0945.JPG" style="max-width:300px;"><br><div class="mt-2"><button class="btn btn-sm btn-outline-dark mark-btn" data-color="red" onclick="changeMarkerColorByPopup(this,'red'); return false;">Mark Red</button> <button class="btn btn-sm btn-outline-dark mark-btn" data-color="yellow" onclick="changeMarkerColorByPopup(this,'yellow'); return false;">Mark Yellow</button> <button class="btn btn-sm btn-outline-dark mark-btn" data-color="green" onclick="changeMarkerColorByPopup(this,'green'); return false;">Mark Green</button></div></div>`)[0];
+                popup_60278195853ed0d4ce20370a04703ec4.setContent(html_15d1956e543888720b71b7b6d8ba0f96);
+            
+        
+
+        marker_f88b97b92ffe8024fd7e9f733d4f02b3.bindPopup(popup_60278195853ed0d4ce20370a04703ec4)
+        ;
+
+        
+    
+    
+            var marker_ba84fa7b188ff8fc73f11dde6e84dba8 = L.marker(
+                [37.791187516917894, -122.44426156272114],
+                {
+}
+            ).addTo(map_1cbba7be74ecd98a85a440eec047acc9);
+        
+    
+        var popup_0e87a6987a55e85f7f75c281a2bc20ae = L.popup({
+  "maxWidth": 600,
+});
+
+        
+            
+                var html_a292f74825ec74e2bbb0e55edee03515 = $(`<div id="html_a292f74825ec74e2bbb0e55edee03515" style="width: 100.0%; height: 100.0%;"><h4>Building C</h4><div id="carousel2" class="carousel slide" data-bs-interval="false" data-bs-touch="false"><div class="carousel-indicators"><button type="button" data-bs-target="#carousel2" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button><button type="button" data-bs-target="#carousel2" data-bs-slide-to="1"  aria-label="Slide 2"></button><button type="button" data-bs-target="#carousel2" data-bs-slide-to="2"  aria-label="Slide 3"></button><button type="button" data-bs-target="#carousel2" data-bs-slide-to="3"  aria-label="Slide 4"></button></div><div class="carousel-inner"><div class="carousel-item active"><img src="https://jswegleitner.github.io/SAP_Evaluator_Case_Studies/images/IMG_0944.JPG" class="d-block w-100" style="max-height:300px; object-fit:contain;"></div><div class="carousel-item"><img src="https://jswegleitner.github.io/SAP_Evaluator_Case_Studies/images/IMG_0945.JPG" class="d-block w-100" style="max-height:300px; object-fit:contain;"></div><div class="carousel-item"><img src="https://jswegleitner.github.io/SAP_Evaluator_Case_Studies/images/IMG_0946.JPG" class="d-block w-100" style="max-height:300px; object-fit:contain;"></div><div class="carousel-item"><img src="https://jswegleitner.github.io/SAP_Evaluator_Case_Studies/images/IMG_0948.JPG" class="d-block w-100" style="max-height:300px; object-fit:contain;"></div></div><button class="carousel-control-prev" type="button" data-bs-target="#carousel2" data-bs-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="visually-hidden">Previous</span></button><button class="carousel-control-next" type="button" data-bs-target="#carousel2" data-bs-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="visually-hidden">Next</span></button><div class="mt-2"><button class="btn btn-sm btn-outline-dark mark-btn" data-color="red" onclick="changeMarkerColorByPopup(this,'red'); return false;">Mark Red</button> <button class="btn btn-sm btn-outline-dark mark-btn" data-color="yellow" onclick="changeMarkerColorByPopup(this,'yellow'); return false;">Mark Yellow</button> <button class="btn btn-sm btn-outline-dark mark-btn" data-color="green" onclick="changeMarkerColorByPopup(this,'green'); return false;">Mark Green</button></div></div>`)[0];
+                popup_0e87a6987a55e85f7f75c281a2bc20ae.setContent(html_a292f74825ec74e2bbb0e55edee03515);
+            
+        
+
+        marker_ba84fa7b188ff8fc73f11dde6e84dba8.bindPopup(popup_0e87a6987a55e85f7f75c281a2bc20ae)
+        ;
+
+        
+    
+</script>
+</html>
